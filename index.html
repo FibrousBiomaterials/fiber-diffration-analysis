@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>intensity_restrict_polar GUI</title>
+<link rel="stylesheet" href="style.css?v=6">
+</head>
+<body>
+<div class="lang-switch" role="group" aria-label="Language">
+  <button type="button" class="lang-switch-btn" data-lang="ja">日本語</button>
+  <button type="button" class="lang-switch-btn" data-lang="en">English</button>
+</div>
+<div id="pyodide-boot-overlay" class="pyodide-boot-overlay" hidden>
+  <div class="pyodide-boot-box">
+    <p id="pyodide-boot-message" class="pyodide-boot-message" data-i18n-html="boot.preparing">Python エンジン(Pyodide)を準備中...</p>
+    <div class="pyodide-boot-bar-track">
+      <div id="pyodide-boot-bar-fill" class="pyodide-boot-bar-fill" style="width: 0%"></div>
+    </div>
+    <p id="pyodide-boot-percent" class="pyodide-boot-percent">0%</p>
+  </div>
+</div>
+<div class="app-layout">
+<nav class="toc" id="toc">
+  <span class="toc-title" data-i18n-html="nav.toc_title">目次</span>
+  <button type="button" class="toc-item" data-target="load-panel" data-i18n-html="nav.step1">1. 画像読み込み</button>
+  <button type="button" class="toc-item" data-target="tilt-panel" data-i18n-html="nav.step2">2. 傾き補正</button>
+  <button type="button" class="toc-item" data-target="reflections-panel" data-i18n-html="nav.step3">3. 回折点の表示</button>
+  <button type="button" class="toc-item" data-target="refine-panel" data-i18n-html="nav.step4">4. ユニットセル精密化</button>
+  <button type="button" class="toc-item" data-target="lorentz-panel" data-i18n-html="nav.step5">5. ローレンツ・偏光補正</button>
+  <button type="button" class="toc-item" data-target="background-panel" data-i18n-html="nav.step6">6. バックグラウンド除去</button>
+  <button type="button" class="toc-item" data-target="peakwidth-panel" data-i18n-html="nav.step7">7. ピーク幅の算出</button>
+  <button type="button" class="toc-item" data-target="blockfit-panel" data-i18n-html="nav.step8">8. ブロックフィット</button>
+</nav>
+
+<div class="page">
+<header>
+  <h1 data-i18n-html="header.title">X線繊維回折画像ビューア</h1>
+</header>
+
+<main>
+  <section class="panel" id="load-panel">
+    <h2 data-i18n-html="load.heading">1. 画像読み込み</h2>
+    <div class="field">
+      <label for="file-input" data-i18n-html="load.file_input_label">.imgファイルを選択(複数可、ドラッグ&ドロップも可)</label>
+      <input type="file" id="file-input" multiple accept=".img">
+      <div id="file-drop-zone" class="file-drop-zone" data-i18n-html="load.drop_zone">ここに.imgファイルをドロップ</div>
+    </div>
+    <form id="load-form">
+      <div class="field">
+        <label for="filename" data-i18n-html="load.filename_label">ファイル</label>
+        <select id="filename" name="filename" required></select>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="img_size" data-i18n-html="load.img_size_label">img_size (px)</label>
+          <input type="number" id="img_size" name="img_size" value="4000" min="1" required>
+        </div>
+        <div class="field">
+          <label for="img_bit" data-i18n-html="load.img_bit_label">img_bit</label>
+          <input type="number" id="img_bit" name="img_bit" value="16" min="1" required>
+        </div>
+      </div>
+      <button type="submit" id="load-btn" data-i18n-html="load.submit_btn">読み込む</button>
+    </form>
+    <p id="status" class="status"></p>
+
+    <div id="load-result" hidden>
+      <dl class="stats" id="stats"></dl>
+      <div class="image-wrap">
+        <img id="preview" alt="detector image preview">
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="tilt-panel" hidden>
+    <h2 data-i18n-html="tilt.heading">2. 傾き補正 (対称化角度の探索)</h2>
+    <div class="field-grid">
+      <div class="field">
+        <label for="tilt_cx" data-i18n-html="tilt.cx_label">cx (ビームセンターX) [px]</label>
+        <input type="number" id="tilt_cx" step="any" value="2011.3" required>
+      </div>
+      <div class="field">
+        <label for="tilt_cy" data-i18n-html="tilt.cy_label">cy (ビームセンターY) [px]</label>
+        <input type="number" id="tilt_cy" step="any" value="2012.3" required>
+      </div>
+    </div>
+    <div class="field field-grid-spaced">
+      <label data-i18n-html="tilt.mode_label">傾き補正</label>
+      <div class="radio-group">
+        <label><input type="radio" name="tilt_mode" value="search" checked> <span data-i18n-html="tilt.mode_search">自動探索する</span></label>
+        <label><input type="radio" name="tilt_mode" value="skip"> <span data-i18n-html="tilt.mode_skip">行わない(角度0のまま進む)</span></label>
+      </div>
+    </div>
+
+    <form id="tilt-form">
+      <div class="field field-grid-spaced">
+        <label for="downsample" data-i18n-html="tilt.downsample_label">探索時の間引き倍率</label>
+        <input type="number" id="downsample" value="4" min="1" required>
+      </div>
+      <button type="submit" id="tilt-btn" data-i18n-html="tilt.submit_btn">角度を探索</button>
+    </form>
+    <p id="tilt-status" class="status"></p>
+
+    <button type="button" id="tilt-skip-btn" class="field-grid-spaced" hidden data-i18n-html="tilt.skip_btn">傾き補正なしで次へ進む</button>
+
+    <div id="tilt-result" hidden>
+      <dl class="stats" id="tilt-stats"></dl>
+      <div class="image-wrap">
+        <img id="tilt-preview" alt="tilt corrected preview">
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="reflections-panel" hidden>
+    <h2 data-i18n-html="reflections.heading">3. 回折点の表示</h2>
+    <form id="reflections-form">
+      <h3 class="subsection-title" data-i18n-html="reflections.crystal_params_heading">結晶パラメータ</h3>
+      <div class="field">
+        <label for="crystal_system" data-i18n-html="reflections.crystal_system_label">結晶系</label>
+        <select id="crystal_system">
+          <option value="triclinic" data-i18n-html="reflections.crystal_triclinic">三斜晶系 (Triclinic)</option>
+          <option value="monoclinic" selected data-i18n-html="reflections.crystal_monoclinic">単斜晶系 (Monoclinic, &alpha;=&beta;=90&deg;)</option>
+          <option value="orthorhombic" data-i18n-html="reflections.crystal_orthorhombic">直方晶系 (Orthorhombic, &alpha;=&beta;=&gamma;=90&deg;)</option>
+          <option value="tetragonal" data-i18n-html="reflections.crystal_tetragonal">正方晶系 (Tetragonal, a=b, &alpha;=&beta;=&gamma;=90&deg;)</option>
+          <option value="hexagonal" data-i18n-html="reflections.crystal_hexagonal">六方晶系 (Hexagonal, a=b, &alpha;=&beta;=90&deg;, &gamma;=120&deg;)</option>
+          <option value="trigonal" data-i18n-html="reflections.crystal_trigonal">三方晶系 (Trigonal, a=b=c, &alpha;=&beta;=&gamma;)</option>
+          <option value="cubic" data-i18n-html="reflections.crystal_cubic">立方晶系 (Cubic, a=b=c, &alpha;=&beta;=&gamma;=90&deg;)</option>
+        </select>
+      </div>
+      <div class="field-grid field-grid-spaced">
+        <div class="field">
+          <label for="a" data-i18n-html="reflections.a_label">a [nm]</label>
+          <input type="number" id="a" step="any" value="0.5939" required>
+        </div>
+        <div class="field">
+          <label for="b" data-i18n-html="reflections.b_label">b [nm]</label>
+          <input type="number" id="b" step="any" value="1.1431" required>
+        </div>
+        <div class="field">
+          <label for="c" data-i18n-html="reflections.c_label">c [nm]</label>
+          <input type="number" id="c" step="any" value="1.0460" required>
+        </div>
+        <div class="field">
+          <label for="alpha_deg" data-i18n-html="reflections.alpha_label">&alpha; [deg]</label>
+          <input type="number" id="alpha_deg" step="any" value="90" required>
+        </div>
+        <div class="field">
+          <label for="beta_deg" data-i18n-html="reflections.beta_label">&beta; [deg]</label>
+          <input type="number" id="beta_deg" step="any" value="90" required>
+        </div>
+        <div class="field">
+          <label for="gamma_deg" data-i18n-html="reflections.gamma_label">&gamma; [deg]</label>
+          <input type="number" id="gamma_deg" step="any" value="95.4" required>
+        </div>
+      </div>
+
+      <h3 class="subsection-title" data-i18n-html="reflections.detector_params_heading">検出器・幾何パラメータ</h3>
+      <div class="field-grid field-grid-spaced">
+        <div class="field">
+          <label for="D" data-i18n-html="reflections.D_label">D (試料-検出器距離) [nm]</label>
+          <input type="number" id="D" step="any" value="170210000" required>
+        </div>
+        <div class="field">
+          <label for="lamda" data-i18n-html="reflections.lamda_label">&lambda; (波長) [nm]</label>
+          <input type="number" id="lamda" step="any" value="0.1" required>
+        </div>
+        <div class="field">
+          <label for="p" data-i18n-html="reflections.p_label">p (画素サイズ) [nm]</label>
+          <input type="number" id="p" step="any" value="100000" required>
+        </div>
+        <div class="field">
+          <label for="phi_deg" data-i18n-html="reflections.phi_deg_label">&phi; (繊維傾斜) [deg]</label>
+          <input type="number" id="phi_deg" step="any" value="0" required>
+        </div>
+        <div class="field">
+          <label for="tilt_angle_deg" data-i18n-html="reflections.tilt_angle_label">傾き補正角度 [deg]</label>
+          <input type="number" id="tilt_angle_deg" step="any" value="0" required>
+        </div>
+        <div class="field">
+          <label for="hkl_max" data-i18n-html="reflections.hkl_max_label">hkl 探索範囲 (&plusmn;)</label>
+          <input type="number" id="hkl_max" value="7" min="1" required>
+        </div>
+      </div>
+      <p class="hint" data-i18n-html="reflections.hint">cx, cy は「2. 傾き補正」で入力した値をそのまま使用します。「2. 傾き補正」で角度を探索すると、傾き補正角度が自動的に入力されます。</p>
+      <button type="submit" id="reflections-btn" data-i18n-html="reflections.submit_btn">回折点を表示</button>
+    </form>
+    <p id="reflections-status" class="status"></p>
+
+    <div id="reflections-result" hidden>
+      <dl class="stats" id="reflections-stats"></dl>
+      <p class="hint" data-i18n-html="reflections.viewer_hint">ドラッグで移動、ホイールでズーム。反射点(緑)をクリックして選択(赤)してください。</p>
+      <div class="viewer" id="viewer">
+        <div class="viewer-stage" id="viewer-stage">
+          <img id="reflections-preview" alt="reflections preview" draggable="false">
+          <svg id="viewer-overlay" class="viewer-overlay"></svg>
+        </div>
+      </div>
+      <div class="viewer-controls">
+        <span id="selection-count">選択中: 0点</span>
+        <button type="button" id="viewer-reset-btn" data-i18n-html="reflections.reset_view_btn">表示をリセット</button>
+        <button type="button" id="clear-selection-btn" data-i18n-html="reflections.clear_selection_btn">選択解除</button>
+      </div>
+      <div class="contrast-controls">
+        <label for="contrast-slider"><span data-i18n-html="reflections.contrast_label">コントラスト</span> <span id="contrast-value">100%</span></label>
+        <input type="range" id="contrast-slider" min="50" max="400" value="100" step="5">
+        <label for="brightness-slider"><span data-i18n-html="reflections.brightness_label">明るさ</span> <span id="brightness-value">100%</span></label>
+        <input type="range" id="brightness-slider" min="30" max="300" value="100" step="5">
+        <label for="dot-size-slider"><span data-i18n-html="reflections.dot_size_label">点のサイズ</span> <span id="dot-size-value">4px</span></label>
+        <input type="range" id="dot-size-slider" min="1" max="10" value="4" step="0.5">
+        <button type="button" id="contrast-reset-btn" data-i18n-html="reflections.contrast_reset_btn">リセット</button>
+      </div>
+      <div class="selected-list-wrap">
+        <h3 data-i18n-html="reflections.selected_list_heading">選択中の反射点</h3>
+        <p class="hint" data-i18n-html="reflections.selected_list_hint">クリックでその点を画面中央に表示、&times;で選択解除、ホバーで画像上のドットをハイライトします。</p>
+        <ul class="selected-list" id="selected-list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="refine-panel" hidden>
+    <h2 data-i18n-html="refine.heading">4. ユニットセル精密化</h2>
+    <div class="field-grid">
+      <div class="field">
+        <label for="refine_r_window" data-i18n-html="refine.r_window_label">動径方向探索窓 (&plusmn;px)</label>
+        <input type="number" id="refine_r_window" value="15" min="3" required>
+      </div>
+      <div class="field">
+        <label for="refine_phi_window" data-i18n-html="refine.phi_window_label">方位角方向探索窓 (&plusmn;deg)</label>
+        <input type="number" id="refine_phi_window" value="8" min="1" step="any" required>
+      </div>
+    </div>
+    <p class="hint" data-i18n-html="refine.hint">「3. 回折点の表示」で選択した反射点それぞれについて、理論位置周辺を極座標(r, &phi;)でサンプリングし、動径方向ローレンツ&times;方位角方向ガウスの2Dモデルをフィットしてピーク中心を求めます(ノートブックのセル20と同じモデル)。得られた d 値から最小二乗法で単位格子を精密化します。必要な点数と精密化するパラメータは「3. 回折点の表示」で選択した結晶系に従います。</p>
+    <button type="button" id="refine-btn" data-i18n-html="refine.submit_btn">選択した点で精密化</button>
+    <p id="refine-status" class="status"></p>
+
+    <div id="refine-result" hidden>
+      <dl class="stats" id="refine-stats"></dl>
+      <table class="refine-table" id="refine-table"></table>
+      <div class="refine-actions">
+        <button type="button" id="apply-refined-btn" data-i18n-html="refine.apply_btn">この値を回折点フォームへ反映</button>
+        <span class="csv-export">
+          <input type="text" id="csv-filename" value="refined_reflections.csv">
+          <button type="button" id="export-csv-btn" data-i18n-html="refine.csv_export_btn">CSVとして保存</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="lorentz-panel" hidden>
+    <h2 data-i18n-html="lorentz.heading">5. ローレンツ・偏光補正</h2>
+    <p class="hint" data-i18n-html="lorentz.hint">D, &lambda;, p, cx, cy, 傾き補正角度は「2. 傾き補正」「3. 回折点の表示」で入力した値をそのまま使用します。繊維軸の傾きも「3. 回折点の表示」の&phi;(繊維傾斜)に既に組み込まれているため、ここでは改めて入力しません。強度抽出の最初のステップとして、円筒対称ローレンツ因子と偏光因子の逆数を生画像に掛けます。</p>
+    <form id="lorentz-form">
+      <div class="field-grid">
+        <div class="field">
+          <label for="polar_a" data-i18n-html="lorentz.A_label">水平偏光成分の割合 A</label>
+          <input type="number" id="polar_a" step="any" value="0.83" min="0" max="1" required>
+        </div>
+        <div class="field">
+          <label for="fiber_axis" data-i18n-html="lorentz.fiber_axis_label">子午線方向</label>
+          <select id="fiber_axis">
+            <option value="vertical" selected data-i18n-html="lorentz.fiber_axis_vertical">vertical (縦)</option>
+            <option value="horizontal" data-i18n-html="lorentz.fiber_axis_horizontal">horizontal (横)</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" id="lorentz-btn" data-i18n-html="lorentz.submit_btn">補正を実行</button>
+    </form>
+    <p id="lorentz-status" class="status"></p>
+
+    <div id="lorentz-result" hidden>
+      <dl class="stats" id="lorentz-stats"></dl>
+      <div class="image-wrap">
+        <img id="lorentz-preview" alt="lorentz corrected preview">
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="background-panel" hidden>
+    <h2 data-i18n-html="background.heading">6. バックグラウンド除去</h2>
+    <p class="hint" data-i18n-html="background.hint">A, 子午線方向は「5. ローレンツ・偏光補正」、D, &lambda;, p, cx, cy, 傾き補正角度, 繊維軸の傾きは「2.」「3.」の入力値をそのまま使用します。ローレンツ・偏光補正済みの画像を極座標(&phi;, r)にリビニングし、方位角トレースごとにベイズ重み付きスプラインで背景を推定して差し引きます(ノートブックのセル17 [3][4][5]の移植)。数秒〜十数秒かかります。</p>
+    <form id="background-form">
+      <div class="field-grid">
+        <div class="field">
+          <label for="n_phi" data-i18n-html="background.n_phi_label">方位角ビン数 N_PHI</label>
+          <input type="number" id="n_phi" value="360" min="10" required>
+        </div>
+        <div class="field">
+          <label for="n_r" data-i18n-html="background.n_r_label">動径ビン数 N_R</label>
+          <input type="number" id="n_r" value="2000" min="10" required>
+        </div>
+        <div class="field">
+          <label for="r_min" data-i18n-html="background.r_min_label">除外する内側半径 R_MIN [px]</label>
+          <input type="number" id="r_min" value="125" min="0" required>
+        </div>
+        <div class="field">
+          <label for="grid_spacing" data-i18n-html="background.grid_spacing_label">背景スプラインのノット間隔 [px]</label>
+          <input type="number" id="grid_spacing" value="150" min="1" required>
+        </div>
+        <div class="field">
+          <label for="n_iter" data-i18n-html="background.n_iter_label">ベイズ反復回数</label>
+          <input type="number" id="n_iter" value="50" min="1" required>
+        </div>
+        <div class="field">
+          <label for="sigma_scale" data-i18n-html="background.sigma_scale_label">ピーク抑制の強さ</label>
+          <input type="number" id="sigma_scale" step="any" value="0.1" min="0.001" required>
+        </div>
+        <div class="field">
+          <label for="window" data-i18n-html="background.window_label">初期推定の窓幅 [px]</label>
+          <input type="number" id="window" value="150" min="1" required>
+        </div>
+        <div class="field">
+          <label for="smooth_sigma_phi" data-i18n-html="background.smooth_sigma_phi_label">背景平滑化 &sigma; (&phi;方向)</label>
+          <input type="number" id="smooth_sigma_phi" step="any" value="6" min="0" required>
+        </div>
+        <div class="field">
+          <label for="smooth_sigma_r" data-i18n-html="background.smooth_sigma_r_label">背景平滑化 &sigma; (r方向)</label>
+          <input type="number" id="smooth_sigma_r" step="any" value="10" min="0" required>
+        </div>
+      </div>
+      <button type="submit" id="background-btn" data-i18n-html="background.submit_btn">背景を除去</button>
+    </form>
+    <p id="background-status" class="status"></p>
+
+    <div id="background-result" hidden>
+      <dl class="stats" id="background-stats"></dl>
+      <div class="triplet-wrap triplet-wrap-row triplet-wrap-tall">
+        <div class="triplet-item">
+          <p class="triplet-caption" data-i18n-html="background.caption_observed">観測 (極座標)</p>
+          <div class="triplet-image-wrap">
+            <img id="background-observed-preview" alt="observed polar preview">
+            <div class="profile-indicator-line" id="indicator-observed"></div>
+          </div>
+        </div>
+        <div class="triplet-item">
+          <p class="triplet-caption" data-i18n-html="background.caption_bg">背景</p>
+          <div class="triplet-image-wrap">
+            <img id="background-bg-preview" alt="background preview">
+            <div class="profile-indicator-line" id="indicator-bg"></div>
+          </div>
+        </div>
+        <div class="triplet-item">
+          <p class="triplet-caption" data-i18n-html="background.caption_sub">差し引き後</p>
+          <div class="triplet-image-wrap">
+            <img id="background-sub-preview" alt="background subtracted preview">
+            <div class="profile-indicator-line" id="indicator-sub"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-viewer">
+        <h3 data-i18n-html="background.profile_heading">動径方向 1D プロファイル</h3>
+        <p class="hint" data-i18n-html="background.profile_hint">スライダーで方位角&phi;を選ぶか、上の画像をクリックすると、その断面(青線)における動径方向(r)の強度プロファイルを表示します(ノートブックのセル18相当)。</p>
+        <div class="profile-controls">
+          <label for="profile-phi-slider">&phi; = <span id="profile-phi-value">0</span>&deg; (bin <span id="profile-phi-bin">0</span> / <span id="profile-phi-max">359</span>)</label>
+          <input type="range" id="profile-phi-slider" min="0" max="359" value="0" step="1">
+        </div>
+        <svg id="profile-chart" class="profile-chart" viewBox="0 0 900 320" preserveAspectRatio="none"></svg>
+        <div class="profile-legend">
+          <span class="legend-item"><span class="legend-swatch observed"></span><span data-i18n-html="background.legend_observed">観測</span></span>
+          <span class="legend-item"><span class="legend-swatch background"></span><span data-i18n-html="background.legend_background">背景</span></span>
+          <span class="legend-item"><span class="legend-swatch subtracted"></span><span data-i18n-html="background.legend_subtracted">差し引き後</span></span>
+        </div>
+        <p id="profile-status" class="status"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="peakwidth-panel" hidden>
+    <h2 data-i18n-html="peakwidth.heading">7. ピーク幅の算出</h2>
+    <p class="hint" data-i18n-html="peakwidth.hint">「4. ユニットセル精密化」で選択・精密化した反射点それぞれについて、精密化で得たピーク位置(r0, &phi;0)を<strong>固定</strong>したまま、背景差し引き済みの極座標データに対して幅だけをフィットします(ノートブックのセル27・28の移植)。動径方向のローレンツ幅&gamma;<sub>r</sub>は全ての点を使ってwm/weq/cモデルをフィットし(セル29〜33)、方位角方向のガウス幅は l=0(赤道)の点のみを使って配向幅Bを求めます(セル27)。「3. 回折点の表示」で選択する反射点には l=0 のものを少なくとも1点含めてください。「6. バックグラウンド除去」の結果を使うため、先に「6.」を実行してください。</p>
+    <div class="field-grid">
+      <div class="field">
+        <label for="beam_size_nm" data-i18n-html="peakwidth.beam_size_label">ビームサイズ [nm]</label>
+        <input type="number" id="beam_size_nm" step="any" value="100000" min="1" required>
+      </div>
+      <div class="field">
+        <label for="peakwidth_r_window" data-i18n-html="peakwidth.r_window_label">動径方向フィット範囲 (&plusmn;px)</label>
+        <input type="number" id="peakwidth_r_window" step="any" value="15" min="1" required>
+      </div>
+      <div class="field">
+        <label for="peakwidth_phi_window" data-i18n-html="peakwidth.phi_window_label">方位角方向フィット範囲 (&plusmn;deg)</label>
+        <input type="number" id="peakwidth_phi_window" step="any" value="8" min="1" required>
+      </div>
+      <div class="field">
+        <label for="peakwidth_r_avg_width" data-i18n-html="peakwidth.r_avg_width_label">配向幅算出時の動径平均化幅 (&plusmn;px)</label>
+        <input type="number" id="peakwidth_r_avg_width" value="5" min="1" required>
+      </div>
+    </div>
+    <p class="hint" data-i18n-html="peakwidth.window_hint">動径・方位角のフィット範囲は既定では「4. ユニットセル精密化」の探索窓と同じ値を使いますが、ここで変更できます。</p>
+    <button type="button" id="peakwidth-btn" data-i18n-html="peakwidth.submit_btn">ピーク幅・配向幅をフィット</button>
+    <p id="peakwidth-status" class="status"></p>
+
+    <div id="peakwidth-result" hidden>
+      <h3 class="subsection-title" data-i18n-html="peakwidth.radial_heading">wm / weq / c (動径方向, 全点)</h3>
+      <dl class="stats" id="peakwidth-stats"></dl>
+      <p class="hint" data-i18n-html="peakwidth.exclude_hint">「除外」にチェックした点を除いて「除外して再フィット」を押すと、その点を除いてwm/weq/cを再フィットします。</p>
+      <div class="scrollable-table">
+        <table class="refine-table" id="peakwidth-table"></table>
+      </div>
+      <button type="button" id="peakwidth-refit-btn" data-i18n-html="peakwidth.refit_btn">除外して再フィット</button>
+
+      <h3 class="subsection-title" data-i18n-html="peakwidth.orientation_heading">配向幅 B (方位角方向, l=0反射のみ)</h3>
+      <dl class="stats" id="peakwidth-b-stats"></dl>
+      <table class="refine-table" id="peakwidth-b-table"></table>
+    </div>
+  </section>
+
+  <section class="panel" id="blockfit-panel" hidden>
+    <h2 data-i18n-html="blockfit.heading">8. ブロックフィット (強度抽出)</h2>
+    <p class="hint" data-i18n-html="blockfit.hint">「7. ピーク幅の算出」で得た wm/weq/c モデルと配向幅B(いずれもフィット済みの値をそのまま使用)を使い、動径方向をブロックに分けてNNLS(非負最小二乗法)で全反射の積分強度を同時に求めます(ノートブックのセル25・35〜44の移植)。先に「6.」「7.」を実行してください。</p>
+    <div class="field-grid">
+      <div class="field">
+        <label for="blockfit_hkl_max" data-i18n-html="blockfit.hkl_max_label">hkl 探索範囲 (&plusmn;)</label>
+        <input type="number" id="blockfit_hkl_max" value="7" min="1" required>
+      </div>
+      <div class="field">
+        <label for="block_R" data-i18n-html="blockfit.block_R_label">ブロック幅 [px]</label>
+        <input type="number" id="block_R" value="150" min="10" required>
+      </div>
+      <div class="field">
+        <label for="r_min_px" data-i18n-html="blockfit.r_min_px_label">除外する内側半径 [px]</label>
+        <input type="number" id="r_min_px" value="125" min="0" required>
+      </div>
+      <div class="field">
+        <label for="blockfit_relative_error" data-i18n-html="blockfit.relative_error_label">&sigma;I 相対誤差項</label>
+        <input type="number" id="blockfit_relative_error" step="any" value="0.03" min="0" required>
+      </div>
+      <div class="field">
+        <label for="blockfit_goof" data-i18n-html="blockfit.goof_label">&sigma;I 較正倍率 GooF</label>
+        <input type="number" id="blockfit_goof" step="any" value="1.0" min="0" required>
+      </div>
+    </div>
+    <p class="hint" data-i18n-html="blockfit.sigma_hint">&sigma;I(強度誤差)の見積もりに使うパラメータです(ノートブックのセル39・42・43相当)。相対誤差項は強反射のI/&sigma;上限をおよそ1/relative_errorに制限します。較正倍率GooFは、SHELXL等で別途得た値がある場合にそれを入力すると&sigma;I全体に掛かります(既定1.0は較正なし)。</p>
+    <button type="button" id="blockfit-btn" data-i18n-html="blockfit.submit_btn">ブロックフィットを実行</button>
+    <p id="blockfit-status" class="status"></p>
+
+    <div id="blockfit-result" hidden>
+      <dl class="stats" id="blockfit-stats"></dl>
+      <div class="triplet-wrap triplet-wrap-row triplet-wrap-tall">
+        <div class="triplet-item">
+          <p class="triplet-caption" data-i18n-html="blockfit.caption_observed">観測</p>
+          <div class="triplet-image-wrap">
+            <img id="blockfit-observed-preview" alt="block fit observed preview">
+            <div class="profile-indicator-line" id="blockfit-indicator-observed"></div>
+          </div>
+        </div>
+        <div class="triplet-item">
+          <p class="triplet-caption" data-i18n-html="blockfit.caption_calc">計算</p>
+          <div class="triplet-image-wrap">
+            <img id="blockfit-calc-preview" alt="block fit calculated preview">
+            <div class="profile-indicator-line" id="blockfit-indicator-calc"></div>
+          </div>
+        </div>
+        <div class="triplet-item">
+          <p class="triplet-caption" data-i18n-html="blockfit.caption_resid">残差</p>
+          <div class="triplet-image-wrap">
+            <img id="blockfit-resid-preview" alt="block fit residual preview">
+            <div class="profile-indicator-line" id="blockfit-indicator-resid"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-viewer">
+        <h3 data-i18n-html="blockfit.profile_heading">動径方向 1D プロファイル (観測 vs 計算)</h3>
+        <p class="hint" data-i18n-html="blockfit.profile_hint">スライダーで方位角&phi;を選ぶか、上の画像をクリックすると、その方位角断面(横線)における動径方向(r)の観測強度・計算強度・残差を比較表示します。その断面に写っている反射は、hklラベル付きの縦線でチャート上に自動的に示されます。</p>
+        <div class="profile-controls">
+          <label for="blockfit-profile-phi-slider">&phi; = <span id="blockfit-profile-phi-value">0</span>&deg; (bin <span id="blockfit-profile-phi-bin">0</span> / <span id="blockfit-profile-phi-max">359</span>)</label>
+          <input type="range" id="blockfit-profile-phi-slider" min="0" max="359" value="0" step="1">
+        </div>
+        <svg id="blockfit-profile-chart" class="profile-chart" viewBox="0 0 900 320" preserveAspectRatio="none"></svg>
+        <div class="profile-legend">
+          <span class="legend-item"><span class="legend-swatch observed"></span><span data-i18n-html="blockfit.legend_observed">観測</span></span>
+          <span class="legend-item"><span class="legend-swatch calc"></span><span data-i18n-html="blockfit.legend_calc">計算</span></span>
+          <span class="legend-item"><span class="legend-swatch resid"></span><span data-i18n-html="blockfit.legend_resid">残差</span></span>
+        </div>
+        <p id="blockfit-profile-status" class="status"></p>
+      </div>
+
+      <h3 class="subsection-title" data-i18n-html="blockfit.merged_heading">反射一覧 (同一hkl・フリーデル対を平均)</h3>
+      <p class="hint" data-i18n-html="blockfit.merged_hint">符号を正規化した同一hkl(フリーデル対を含む)を加重平均しています(ノートブックのセル48・49相当)。lごとにグループ化し(l=0が先頭)、各グループ内では面間隔dの大きい順に並べています。</p>
+      <div class="scrollable-table">
+        <table class="refine-table" id="blockfit-merged-table"></table>
+      </div>
+      <div class="refine-actions refine-actions-stacked">
+        <span class="csv-export">
+          <input type="text" id="blockfit-merged-csv-filename" value="merged_intensities.csv">
+          <button type="button" id="blockfit-merged-export-csv-btn" data-i18n-html="blockfit.csv_export_btn">CSVとして保存</button>
+        </span>
+        <span class="csv-export">
+          <input type="text" id="blockfit-merged-hkl-filename" value="merged_intensities.hkl">
+          <label for="blockfit-merged-hkl-scale" class="hkl-scale-label" data-i18n-html="blockfit.hkl_scale_label">スケール</label>
+          <input type="number" id="blockfit-merged-hkl-scale" step="any" value="100000" min="0" class="hkl-scale-input">
+          <button type="button" id="blockfit-merged-export-hkl-btn" data-i18n-html="blockfit.hkl_export_btn">HKLとして保存</button>
+        </span>
+      </div>
+
+      <h3 class="subsection-title" data-i18n-html="blockfit.dspacing_heading">面間隔でさらにマージ (対称等価だがhklが異なる反射)</h3>
+      <p class="hint" data-i18n-html="blockfit.dspacing_hint">上の一覧に対し、同一l内で面間隔dが数学的にほぼ完全一致する(hklは異なる)反射同士をさらに加重平均します(ノートブックのセル51〜54相当)。許容誤差は浮動小数点誤差程度のごく小さい値が既定で、緩めすぎるとたまたま近いだけの別反射まで誤って平均してしまうので注意してください。</p>
+      <div class="field-grid">
+        <div class="field">
+          <label for="blockfit_d_tol_nm" data-i18n-html="blockfit.d_tol_label">d許容誤差 [nm]</label>
+          <input type="number" id="blockfit_d_tol_nm" step="any" value="0.000001" min="0" required>
+        </div>
+      </div>
+      <button type="button" id="blockfit-merge-dspacing-btn" data-i18n-html="blockfit.dspacing_submit_btn">面間隔でさらにマージ</button>
+      <p id="blockfit-merge-dspacing-status" class="status"></p>
+
+      <div id="blockfit-dspacing-result" hidden>
+        <div class="scrollable-table">
+          <table class="refine-table" id="blockfit-dspacing-table"></table>
+        </div>
+        <div class="refine-actions refine-actions-stacked">
+          <span class="csv-export">
+            <input type="text" id="blockfit-dspacing-csv-filename" value="merged_intensities_dspacing.csv">
+            <button type="button" id="blockfit-dspacing-export-csv-btn" data-i18n-html="blockfit.csv_export_btn">CSVとして保存</button>
+          </span>
+          <span class="csv-export">
+            <input type="text" id="blockfit-dspacing-hkl-filename" value="merged_intensities_dspacing.hkl">
+            <label for="blockfit-dspacing-hkl-scale" class="hkl-scale-label" data-i18n-html="blockfit.hkl_scale_label">スケール</label>
+            <input type="number" id="blockfit-dspacing-hkl-scale" step="any" value="100000" min="0" class="hkl-scale-input">
+            <button type="button" id="blockfit-dspacing-export-hkl-btn" data-i18n-html="blockfit.hkl_export_btn">HKLとして保存</button>
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+</div>
+</div>
+
+<script src="i18n.js?v=1"></script>
+<script src="pyClient.js?v=14"></script>
+<script src="app.js?v=32"></script>
+</body>
+</html>
