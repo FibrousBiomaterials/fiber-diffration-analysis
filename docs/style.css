@@ -477,6 +477,21 @@ button:disabled {
   stroke-width: 1.5;
 }
 
+.viewer-tooltip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  background: rgba(20, 20, 20, 0.9);
+  color: #fff;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 5;
+}
+
 .viewer-controls {
   display: flex;
   align-items: center;

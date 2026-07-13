@@ -193,11 +193,12 @@
 
     <div id="reflections-result" hidden>
       <dl class="stats" id="reflections-stats"></dl>
-      <p class="hint" data-i18n-html="reflections.viewer_hint">ドラッグで移動、ホイールでズーム。反射点(緑)をクリックして選択(赤)してください。</p>
+      <p class="hint" data-i18n-html="reflections.viewer_hint">ドラッグで移動、ホイールでズーム。反射点(緑)をクリックして選択(赤)すると、指数(h, k, l)がポップアップ表示されます。</p>
       <div class="viewer" id="viewer">
         <div class="viewer-stage" id="viewer-stage">
           <img id="reflections-preview" alt="reflections preview" draggable="false">
           <svg id="viewer-overlay" class="viewer-overlay"></svg>
+          <div id="viewer-tooltip" class="viewer-tooltip" hidden></div>
         </div>
       </div>
       <div class="viewer-controls">
@@ -533,8 +534,8 @@
 </div>
 </div>
 
-<script src="i18n.js?v=3"></script>
+<script src="i18n.js?v=4"></script>
 <script src="pyClient.js?v=17"></script>
-<script src="app.js?v=34"></script>
+<script src="app.js?v=35"></script>
 </body>
 </html>

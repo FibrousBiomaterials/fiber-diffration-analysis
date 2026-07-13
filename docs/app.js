@@ -361,6 +361,7 @@ reflectionsForm.addEventListener("submit", async (event) => {
 const viewerEl = document.getElementById("viewer");
 const viewerStageEl = document.getElementById("viewer-stage");
 const overlaySvg = document.getElementById("viewer-overlay");
+const viewerTooltipEl = document.getElementById("viewer-tooltip");
 const selectionCountEl = document.getElementById("selection-count");
 const viewerResetBtn = document.getElementById("viewer-reset-btn");
 const clearSelectionBtn = document.getElementById("clear-selection-btn");
@@ -368,6 +369,7 @@ const refinePanel = document.getElementById("refine-panel");
 const refineBtn = document.getElementById("refine-btn");
 
 const CLICK_DRAG_THRESHOLD = 4; // これ以上動いたらドラッグ扱い(クリックとして扱わない)
+const TOOLTIP_DURATION_MS = 1800; // 選択時のhklポップアップを自動で隠すまでの時間
 
 const selectedListEl = document.getElementById("selected-list");
 
@@ -377,10 +379,12 @@ let viewTransform = { scale: 1, tx: 0, ty: 0, fitScale: 1 };
 let panState = null;
 let dragDistance = 0;
 let previewScale = 1;
+let tooltipHideTimer = null;
 
 function initViewer(data) {
   currentPoints = data.points;
   selectedIndices = new Set();
+  hidePointTooltip();
 
   reflectionsPreviewEl.src = `data:image/png;base64,${data.preview_png_base64}`;
   const [pw, ph] = data.preview_size;
@@ -461,6 +465,40 @@ function getCircle(idx) {
   return overlaySvg.querySelector(`circle[data-idx="${idx}"]`);
 }
 
+// 選択した反射点のhkl指数をポップアップ表示する(ズーム・パンにも追従し、
+// 一定時間後に自動で消える)。
+function positionTooltip(idx) {
+  const pt = currentPoints[idx];
+  if (!pt) return;
+  const stageX = pt.x * previewScale;
+  const stageY = pt.y * previewScale;
+  const inverseScale = 1 / viewTransform.scale;
+  viewerTooltipEl.style.left = `${stageX}px`;
+  viewerTooltipEl.style.top = `${stageY}px`;
+  viewerTooltipEl.style.transform = `translate(-50%, -100%) scale(${inverseScale})`;
+}
+
+function showPointTooltip(idx) {
+  const pt = currentPoints[idx];
+  if (!pt) return;
+  viewerTooltipEl.textContent = `(${pt.h}, ${pt.k}, ${pt.l})`;
+  viewerTooltipEl.dataset.idx = idx;
+  viewerTooltipEl.hidden = false;
+  positionTooltip(idx);
+
+  if (tooltipHideTimer) clearTimeout(tooltipHideTimer);
+  tooltipHideTimer = setTimeout(hidePointTooltip, TOOLTIP_DURATION_MS);
+}
+
+function hidePointTooltip() {
+  if (tooltipHideTimer) {
+    clearTimeout(tooltipHideTimer);
+    tooltipHideTimer = null;
+  }
+  viewerTooltipEl.hidden = true;
+  delete viewerTooltipEl.dataset.idx;
+}
+
 function selectPoint(idx) {
   if (selectedIndices.has(idx)) return;
   selectedIndices.add(idx);
@@ -468,6 +506,7 @@ function selectPoint(idx) {
   if (circle) circle.classList.add("selected");
   updateSelectionCount();
   renderSelectedList();
+  showPointTooltip(idx);
 }
 
 function deselectPoint(idx) {
@@ -477,6 +516,9 @@ function deselectPoint(idx) {
   if (circle) circle.classList.remove("selected");
   updateSelectionCount();
   renderSelectedList();
+  if (!viewerTooltipEl.hidden && Number(viewerTooltipEl.dataset.idx) === idx) {
+    hidePointTooltip();
+  }
 }
 
 function toggleSelection(idx) {
@@ -539,6 +581,11 @@ function renderSelectedList() {
 function applyViewerTransform() {
   viewerStageEl.style.transform =
     `translate(${viewTransform.tx}px, ${viewTransform.ty}px) scale(${viewTransform.scale})`;
+  // ポップアップの位置(stage内の静的な座標)はステージと一緒に動くが、文字が
+  // 拡大縮小されないよう、ズーム倍率の逆数を毎回かけ直す。
+  if (!viewerTooltipEl.hidden && viewerTooltipEl.dataset.idx !== undefined) {
+    positionTooltip(Number(viewerTooltipEl.dataset.idx));
+  }
 }
 
 function minPointsRequired() {
@@ -638,6 +685,7 @@ clearSelectionBtn.addEventListener("click", () => {
   selectedIndices.clear();
   updateSelectionCount();
   renderSelectedList();
+  hidePointTooltip();
 });
 
 // =============================================================================
