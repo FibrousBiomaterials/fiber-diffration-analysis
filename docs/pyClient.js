@@ -27,7 +27,7 @@ function getWorker() {
   if (worker) return worker;
   // pyWorker.js はブラウザにキャッシュされやすいため、変更のたびにクエリの
   // バージョン番号を上げてキャッシュを回避する(index.html側のscriptタグと同じ運用)。
-  worker = new Worker("pyWorker.js?v=13");
+  worker = new Worker("pyWorker.js?v=16");
   worker.onmessage = onWorkerMessage;
   worker.onerror = (ev) => {
     console.error("[pyWorker] worker error", ev);

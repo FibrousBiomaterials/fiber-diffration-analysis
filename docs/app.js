@@ -31,9 +31,14 @@ function refreshFilenameSelect() {
   if (loadedFiles.has(previous)) filenameSelect.value = previous;
 }
 
+function isSupportedImageFile(name) {
+  const lower = name.toLowerCase();
+  return lower.endsWith(".img") || lower.endsWith(".tif") || lower.endsWith(".tiff");
+}
+
 async function addFiles(fileList) {
   for (const file of fileList) {
-    if (!file.name.toLowerCase().endsWith(".img")) continue;
+    if (!isSupportedImageFile(file.name)) continue;
     const buffer = await file.arrayBuffer();
     loadedFiles.set(file.name, buffer);
   }
@@ -117,7 +122,8 @@ form.addEventListener("submit", async (event) => {
 
   const payload = {
     filename,
-    img_size: Number(document.getElementById("img_size").value),
+    img_width: Number(document.getElementById("img_width").value),
+    img_height: Number(document.getElementById("img_height").value),
     img_bit: Number(document.getElementById("img_bit").value),
   };
 
@@ -187,7 +193,8 @@ tiltForm.addEventListener("submit", async (event) => {
 
   const payload = {
     filename,
-    img_size: Number(document.getElementById("img_size").value),
+    img_width: Number(document.getElementById("img_width").value),
+    img_height: Number(document.getElementById("img_height").value),
     img_bit: Number(document.getElementById("img_bit").value),
     cx: Number(document.getElementById("tilt_cx").value),
     cy: Number(document.getElementById("tilt_cy").value),
@@ -310,7 +317,8 @@ reflectionsForm.addEventListener("submit", async (event) => {
 
   const payload = {
     filename,
-    img_size: Number(document.getElementById("img_size").value),
+    img_width: Number(document.getElementById("img_width").value),
+    img_height: Number(document.getElementById("img_height").value),
     img_bit: Number(document.getElementById("img_bit").value),
     a: Number(document.getElementById("a").value),
     b: Number(document.getElementById("b").value),
@@ -737,7 +745,8 @@ refineBtn.addEventListener("click", async () => {
 
   const payload = {
     filename,
-    img_size: Number(document.getElementById("img_size").value),
+    img_width: Number(document.getElementById("img_width").value),
+    img_height: Number(document.getElementById("img_height").value),
     img_bit: Number(document.getElementById("img_bit").value),
     cx: Number(document.getElementById("tilt_cx").value),
     cy: Number(document.getElementById("tilt_cy").value),
@@ -876,7 +885,8 @@ lorentzForm.addEventListener("submit", async (event) => {
 
   const payload = {
     filename,
-    img_size: Number(document.getElementById("img_size").value),
+    img_width: Number(document.getElementById("img_width").value),
+    img_height: Number(document.getElementById("img_height").value),
     img_bit: Number(document.getElementById("img_bit").value),
     cx: Number(document.getElementById("tilt_cx").value),
     cy: Number(document.getElementById("tilt_cy").value),
@@ -1142,7 +1152,8 @@ backgroundForm.addEventListener("submit", async (event) => {
 
   const payload = {
     filename,
-    img_size: Number(document.getElementById("img_size").value),
+    img_width: Number(document.getElementById("img_width").value),
+    img_height: Number(document.getElementById("img_height").value),
     img_bit: Number(document.getElementById("img_bit").value),
     cx: Number(document.getElementById("tilt_cx").value),
     cy: Number(document.getElementById("tilt_cy").value),

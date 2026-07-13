@@ -42,9 +42,9 @@
   <section class="panel" id="load-panel">
     <h2 data-i18n-html="load.heading">1. 画像読み込み</h2>
     <div class="field">
-      <label for="file-input" data-i18n-html="load.file_input_label">.imgファイルを選択(複数可、ドラッグ&ドロップも可)</label>
-      <input type="file" id="file-input" multiple accept=".img">
-      <div id="file-drop-zone" class="file-drop-zone" data-i18n-html="load.drop_zone">ここに.imgファイルをドロップ</div>
+      <label for="file-input" data-i18n-html="load.file_input_label">.img/.tiffファイルを選択(複数可、ドラッグ&ドロップも可)</label>
+      <input type="file" id="file-input" multiple accept=".img,.tif,.tiff">
+      <div id="file-drop-zone" class="file-drop-zone" data-i18n-html="load.drop_zone">ここに.img/.tiffファイルをドロップ</div>
     </div>
     <form id="load-form">
       <div class="field">
@@ -53,11 +53,15 @@
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="img_size" data-i18n-html="load.img_size_label">img_size (px)</label>
-          <input type="number" id="img_size" name="img_size" value="4000" min="1" required>
+          <label for="img_width" data-i18n-html="load.img_width_label">img_width (px)</label>
+          <input type="number" id="img_width" name="img_width" value="4000" min="1" required>
         </div>
         <div class="field">
-          <label for="img_bit" data-i18n-html="load.img_bit_label">img_bit</label>
+          <label for="img_height" data-i18n-html="load.img_height_label">img_height (px)</label>
+          <input type="number" id="img_height" name="img_height" value="4000" min="1" required>
+        </div>
+        <div class="field">
+          <label for="img_bit" data-i18n-html="load.img_bit_label">img_bit (.imgのみ)</label>
           <input type="number" id="img_bit" name="img_bit" value="16" min="1" required>
         </div>
       </div>
@@ -529,8 +533,8 @@
 </div>
 </div>
 
-<script src="i18n.js?v=1"></script>
-<script src="pyClient.js?v=14"></script>
-<script src="app.js?v=32"></script>
+<script src="i18n.js?v=3"></script>
+<script src="pyClient.js?v=17"></script>
+<script src="app.js?v=34"></script>
 </body>
 </html>

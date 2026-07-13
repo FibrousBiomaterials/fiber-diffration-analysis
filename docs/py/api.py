@@ -30,7 +30,7 @@ from blockfit import (
     expand_symmetric_points,
     reconstruct_pattern,
 )
-from detector import load_detector_image
+from detector import load_detector_image, load_tiff_image
 from correction import build_lorentz_map
 from merge import merge_by_dspacing, merge_by_hkl
 from peakwidth import fit_peak_width_model, fit_peak_widths
@@ -51,9 +51,13 @@ def _decode_image(payload: dict, file_bytes) -> tuple[np.ndarray, int]:
     if file_bytes is None:
         raise ValueError("画像ファイルが指定されていません")
     raw = bytes(file_bytes)
-    img_size = int(payload.get("img_size", 4000))
+    filename = str(payload.get("filename", ""))
+    if filename.lower().endswith((".tif", ".tiff")):
+        return load_tiff_image(raw)
+    img_width = int(payload.get("img_width", 4000))
+    img_height = int(payload.get("img_height", 4000))
     img_bit = int(payload.get("img_bit", 16))
-    return load_detector_image(raw, img_size, img_bit)
+    return load_detector_image(raw, img_width, img_height, img_bit)
 
 
 def _to_preview_png(img: np.ndarray) -> tuple[str, float, int, int]:
@@ -121,7 +125,6 @@ def _reflections(payload: dict, progress_cb, file_bytes) -> dict:
     tilt_angle_deg = float(payload.get("tilt_angle_deg", 0))
     cx = float(payload.get("cx", 2011.3))
     cy = float(payload.get("cy", 2012.3))
-    img_size = int(payload.get("img_size", 4000))
     p = float(payload.get("p", 100000))
     D = float(payload.get("D", 170210000))
     lamda = float(payload.get("lamda", 0.1))
@@ -129,6 +132,8 @@ def _reflections(payload: dict, progress_cb, file_bytes) -> dict:
 
     if tilt_angle_deg:
         img = rotate_around_center(img.astype(np.float64), tilt_angle_deg, cx, cy, order=3)
+
+    img_height, img_width = img.shape
 
     a_v, b_v, c_v, V = compute_unit_cell_vectors(
         float(payload.get("a", 0.5939)), float(payload.get("b", 1.1431)), float(payload.get("c", 1.0460)),
@@ -143,9 +148,9 @@ def _reflections(payload: dict, progress_cb, file_bytes) -> dict:
 
     points: list[dict] = []
     for p1, p3, hkl in projection:
-        y = float(np.clip(p3 / p + cy, 0, img_size))
-        x1 = float(np.clip(p1 / p + cx, 0, img_size))
-        x2 = float(np.clip(-p1 / p + cx, 0, img_size))
+        y = float(np.clip(p3 / p + cy, 0, img_height))
+        x1 = float(np.clip(p1 / p + cx, 0, img_width))
+        x2 = float(np.clip(-p1 / p + cx, 0, img_width))
         points.append({"h": hkl[0], "k": hkl[1], "l": hkl[2], "x": x1, "y": y})
         points.append({"h": hkl[0], "k": hkl[1], "l": hkl[2], "x": x2, "y": y})
 

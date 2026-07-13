@@ -19,11 +19,12 @@ const I18N = {
     "boot.preparing": "Python エンジン(Pyodide)を準備中...",
 
     "load.heading": "1. 画像読み込み",
-    "load.file_input_label": ".imgファイルを選択(複数可、ドラッグ&amp;ドロップも可)",
-    "load.drop_zone": "ここに.imgファイルをドロップ",
+    "load.file_input_label": ".img/.tiffファイルを選択(複数可、ドラッグ&amp;ドロップも可)",
+    "load.drop_zone": "ここに.img/.tiffファイルをドロップ",
     "load.filename_label": "ファイル",
-    "load.img_size_label": "img_size (px)",
-    "load.img_bit_label": "img_bit",
+    "load.img_width_label": "img_width (px)",
+    "load.img_height_label": "img_height (px)",
+    "load.img_bit_label": "img_bit (.imgのみ)",
     "load.submit_btn": "読み込む",
 
     "tilt.heading": "2. 傾き補正 (対称化角度の探索)",
@@ -301,11 +302,12 @@ const I18N = {
     "boot.preparing": "Preparing the Python engine (Pyodide)...",
 
     "load.heading": "1. Load image",
-    "load.file_input_label": "Select .img file(s) (multiple allowed, drag &amp; drop supported)",
-    "load.drop_zone": "Drop .img file(s) here",
+    "load.file_input_label": "Select .img/.tiff file(s) (multiple allowed, drag &amp; drop supported)",
+    "load.drop_zone": "Drop .img/.tiff file(s) here",
     "load.filename_label": "File",
-    "load.img_size_label": "img_size (px)",
-    "load.img_bit_label": "img_bit",
+    "load.img_width_label": "img_width (px)",
+    "load.img_height_label": "img_height (px)",
+    "load.img_bit_label": "img_bit (.img only)",
     "load.submit_btn": "Load",
 
     "tilt.heading": "2. Tilt correction (search for symmetrization angle)",
