@@ -1,5 +1,5 @@
 // メインスレッドから pyWorker.js (Pyodide) を呼び出すための薄いクライアント。
-// 既存の fetch(url,{...}).then(r=>r.json()) と同じ形の非同期関数として提供することで、
+// fetch(url,{...}).then(r=>r.json()) と同じ形の非同期関数として提供することで、
 // app.js 側の呼び出し箇所は route 名を変えるだけで済むようにする。
 
 let worker = null;
@@ -90,8 +90,7 @@ function initPyodideWorker() {
 
 // fileBytes (Uint8Array/ArrayBuffer, 省略可) は画像バイト列などpayloadのJSONに
 // 含めにくいデータを別枠で渡すためのもの。再読込のたびに毎回渡す想定のため、
-// (ステージ1時点では最適化せず)呼び出し元のバッファを破壊しないよう
-// Transferable化はせず構造化クローンでコピーする。
+// 呼び出し元のバッファを破壊しないよう Transferable化はせず構造化クローンでコピーする。
 function pyCall(route, payload, fileBytes) {
   return pyCallWithProgress(route, payload, null, fileBytes);
 }

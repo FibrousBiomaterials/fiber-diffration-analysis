@@ -1677,9 +1677,8 @@ document.getElementById("blockfit-merged-export-csv-btn").addEventListener("clic
     "# merged reflection intensities (symmetry-equivalent hkl + Friedel pairs averaged)");
 });
 
-// ノートブックの write_reflections_as_hkl (セル56/57) と同じ固定幅フォーマットで
-// h,k,l,I,sigma,m を書き出す。l は正の値にそろえ、l昇順→同一l内はR0昇順→h→kで並べる
-// (ノートブックの出力順と同一)。
+// 固定幅フォーマットで h,k,l,I,sigma,m を書き出す。l は正の値にそろえ、
+// l昇順→同一l内はR0昇順→h→kで並べる。
 function padIntField(value, width) {
   return String(Math.trunc(value)).padStart(width, " ");
 }

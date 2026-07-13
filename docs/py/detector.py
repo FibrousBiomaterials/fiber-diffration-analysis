@@ -1,7 +1,6 @@
 """cta1_*.img 形式の検出器画像を読み込むモジュール。
 
-instensity_resrict_polar.ipynb の画像読み込みセル（バイナリ読み込み→16bitデコード
-→reshape→転置）をそのまま踏襲し、NumPyでベクトル化したもの。
+バイナリ読み込み→16bitデコード→reshape→転置をNumPyでベクトル化して行う。
 
 ブラウザ内実行(Pyodide)では File API で読み込んだバイト列をそのまま渡すため、
 ファイルパスではなく bytes を受け取る。

@@ -1,14 +1,13 @@
 """ピーク幅(結晶子サイズ・配向乱れ・格子歪み由来の広がり)モデルを最小二乗フィットするモジュール。
 
-instensity_resrict_polar.ipynb セル27・28・29〜33 の移植:
-  fit_radial_width_fixed_center     : セル28相当。ピーク位置(r0)を固定し、
+  fit_radial_width_fixed_center     : ピーク位置(r0)を固定し、
                                         動径方向ローレンツ幅のみをフィット
-  fit_azimuthal_width_fixed_center  : セル27相当。ピーク位置(phi0)を固定し、
+  fit_azimuthal_width_fixed_center  : ピーク位置(phi0)を固定し、
                                         方位角方向ガウス幅のみをフィット(l=0反射用)
   fit_peak_widths                    : 上記2つを選択済み反射点全体に適用するドライバ
   w0            : ビームサイズ由来の幅(固定値、beam_size/p)
   calc_sigma_from_hkl : 各hklの逆格子ベクトルと繊維軸とのなす角 sigma
-  fit_peak_width_model : w0 を固定して wm, weq, c をフィットする w_function (セル33)
+  fit_peak_width_model : w0 を固定して wm, weq, c をフィットする w_function
 """
 from __future__ import annotations
 
@@ -27,9 +26,9 @@ def fit_radial_width_fixed_center(
     r_window: float,
 ) -> float | None:
     """r0を固定し、phi0に最も近い方位角トレースの動径プロファイルにローレンツ+定数を
-    フィットして動径方向の幅(HWHM)を返す(ノートブック cell28 の移植)。
+    フィットして動径方向の幅(HWHM)を返す。
 
-    ノートブックは背景(定数項)をフィット範囲内のmin(y)に固定しているが、
+    背景(定数項)をフィット範囲内のmin(y)に固定する方法だと、
     フィット範囲が幅に対して狭いとmin(y)が真の背景より大幅に高く見積もられ、
     幅が過小評価される。そのため背景も自由パラメータとしてフィットする。
     """
@@ -71,15 +70,15 @@ def fit_azimuthal_width_fixed_center(
     r_avg_width: int = 5,
 ) -> float | None:
     """phi0(固定)を中心に、r0付近で平均した方位角プロファイルへ
-    ガウス+定数(背景も固定)をフィットして配向幅(sigma, deg単位)を返す
-    (ノートブック cell27 の移植)。l=0反射にのみ使う。
+    ガウス+定数(背景も固定)をフィットして配向幅(sigma, deg単位)を返す。
+    l=0反射にのみ使う。
 
     フィット自体はビン単位の格子(polar_sub_smoothのインデックス)で行うが、
     返り値は検出器のビン分解能(n_phi)に依存しない deg 単位に変換する。
     phi0が0°/360°付近にある場合でも周期境界をまたいで正しくフィットできるよう、
     中心からの角度差は [-n_phi/2, n_phi/2) に巻きつけてから使う。
 
-    ノートブックは背景(定数項)をフィット範囲内のmin(y)に固定しているが、
+    背景(定数項)をフィット範囲内のmin(y)に固定する方法だと、
     フィット範囲(phi_window_deg)が配向幅に対して狭いと、範囲内のどの点も
     まだピークの裾野にあるため min(y) が真の背景より大幅に高く見積もられ、
     配向幅が過小評価される(実測で真値の半分程度まで縮む場合があった)。
@@ -184,7 +183,7 @@ def fit_peak_width_model(
     lamda: float,
 ) -> dict:
     """observations: [{'hkl': (h,k,l), 'dstar': float, 'gamma_r': float}, ...] から
-    wm, weq, c をフィットする(w0は固定)。ノートブック cell 33 r_sigma_fitting の移植。
+    wm, weq, c をフィットする(w0は固定)。
     """
     hkl_arr = np.array([o["hkl"] for o in observations], dtype=float)
     dstar_arr = np.array([o["dstar"] for o in observations], dtype=float)
@@ -211,8 +210,7 @@ def fit_peak_width_model(
     residual = w_arr - w_calc
     chi = float(np.sum((residual ** 2) / w_calc))
     dof = len(w_arr) - len(popt)
-    # ノートブック cell 33 に合わせて sf (生存関数) を使う (cell21 の unit_cell_fitting は cdf で、
-    # 元のノートブック自体がセルごとに異なる慣習を使っているため、それぞれ忠実に踏襲する)
+    # sf (生存関数) を使う。unit_cell_fitting では cdf を使っており、慣習が異なる点に注意。
     pvalue = float(chi2.sf(chi, df=dof)) if dof > 0 else float("nan")
 
     wm_fit, weq_fit, c_fit = (float(v) for v in popt)

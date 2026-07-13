@@ -1,8 +1,4 @@
-"""検出器画像の左右対称性から傾き補正角度を自動探索するモジュール。
-
-instensity_resrict_polar.ipynb のセル15（左右対称化のための回転角自動探索）
-およびセル17の rotate_around_center をそのまま移植したもの。
-"""
+"""検出器画像の左右対称性から傾き補正角度を自動探索するモジュール。"""
 from __future__ import annotations
 
 from typing import Callable
@@ -56,7 +52,7 @@ def search_tilt_angle(
     fine_step: float = 0.01,
     on_progress: ProgressCallback | None = None,
 ) -> dict:
-    """粗探索→精密探索で対称化角度を求める(ノートブック cell 15 と同じロジック)。
+    """粗探索→精密探索で対称化角度を求める。
 
     フル解像度だと1回の探索に数分かかるため、探索自体はダウンサンプリング画像で
     行い、角度(deg)のみを返す。角度はスケールに依存しないため、この結果を

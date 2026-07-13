@@ -1,11 +1,9 @@
 """クリックした回折点のピーク位置を精密化し、最小二乗法で単位格子を精密化するモジュール。
 
 ピーク検出: 理論位置(x0,y0)周辺を極座標(r, phi)でサンプリングし、動径方向ローレンツ関数×
-方位角方向ガウス関数の2Dモデル(instensity_resrict_polar.ipynb セル20 の
-_peak_2d_lorentz_x_gauss と同じ関数形)を直接生画像に対してフィットする。
-単位格子精密化: instensity_resrict_polar.ipynb セル21 unit_cell_fitting の一般化版。
-元は alpha=beta=90度固定の単斜晶系専用だったが、一般三斜晶系の d 値の式をベースに、
-結晶系ごとの独立パラメータ・連動・固定角をCRYSTAL_SYSTEMSで表現して7結晶系に対応する。
+方位角方向ガウス関数の2Dモデルを直接生画像に対してフィットする。
+単位格子精密化: 一般三斜晶系の d 値の式をベースに、結晶系ごとの独立パラメータ・連動・
+固定角をCRYSTAL_SYSTEMSで表現して7結晶系に対応する。
 """
 from __future__ import annotations
 
@@ -64,7 +62,7 @@ CRYSTAL_SYSTEMS: dict[str, dict] = {
 
 
 def _peak_2d_lorentz_x_gauss(rphi, amplitude, r0, phi0, gamma_r, sigma_phi, bg):
-    """r方向ローレンツ×phi方向ガウスの2Dピークプロファイル(ノートブック セル20と同じ関数形)。
+    """r方向ローレンツ×phi方向ガウスの2Dピークプロファイル。
 
     phi はここでは理論位置周辺の非周期的な連続値として扱う(360度境界の折り返しは
     fit_peak_polar 側でサンプリング時に回避しているため、周期処理は不要)。
@@ -167,7 +165,7 @@ def radius_nm_to_d(R: float, D: float, lamda: float) -> float | None:
 
 
 def _d_hkl_triclinic(h, k, l, a, b, c, alpha_rad, beta_rad, gamma_rad):
-    """一般三斜晶系の d 値。ノートブック cell 21 の d_function を alpha,beta 固定なしに一般化したもの。"""
+    """一般三斜晶系の d 値(alpha, beta を固定しない一般形)。"""
     cos_a, cos_b, cos_g = np.cos(alpha_rad), np.cos(beta_rad), np.cos(gamma_rad)
     sin_a, sin_b, sin_g = np.sin(alpha_rad), np.sin(beta_rad), np.sin(gamma_rad)
 

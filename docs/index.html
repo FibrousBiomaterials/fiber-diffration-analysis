@@ -230,7 +230,7 @@
         <input type="number" id="refine_phi_window" value="8" min="1" step="any" required>
       </div>
     </div>
-    <p class="hint" data-i18n-html="refine.hint">「3. 回折点の表示」で選択した反射点それぞれについて、理論位置周辺を極座標(r, &phi;)でサンプリングし、動径方向ローレンツ&times;方位角方向ガウスの2Dモデルをフィットしてピーク中心を求めます(ノートブックのセル20と同じモデル)。得られた d 値から最小二乗法で単位格子を精密化します。必要な点数と精密化するパラメータは「3. 回折点の表示」で選択した結晶系に従います。</p>
+    <p class="hint" data-i18n-html="refine.hint">「3. 回折点の表示」で選択した反射点それぞれについて、理論位置周辺を極座標(r, &phi;)でサンプリングし、動径方向ローレンツ&times;方位角方向ガウスの2Dモデルをフィットしてピーク中心を求めます。得られた d 値から最小二乗法で単位格子を精密化します。必要な点数と精密化するパラメータは「3. 回折点の表示」で選択した結晶系に従います。</p>
     <button type="button" id="refine-btn" data-i18n-html="refine.submit_btn">選択した点で精密化</button>
     <p id="refine-status" class="status"></p>
 
@@ -278,7 +278,7 @@
 
   <section class="panel" id="background-panel" hidden>
     <h2 data-i18n-html="background.heading">6. バックグラウンド除去</h2>
-    <p class="hint" data-i18n-html="background.hint">A, 子午線方向は「5. ローレンツ・偏光補正」、D, &lambda;, p, cx, cy, 傾き補正角度, 繊維軸の傾きは「2.」「3.」の入力値をそのまま使用します。ローレンツ・偏光補正済みの画像を極座標(&phi;, r)にリビニングし、方位角トレースごとにベイズ重み付きスプラインで背景を推定して差し引きます(ノートブックのセル17 [3][4][5]の移植)。数秒〜十数秒かかります。</p>
+    <p class="hint" data-i18n-html="background.hint">A, 子午線方向は「5. ローレンツ・偏光補正」、D, &lambda;, p, cx, cy, 傾き補正角度, 繊維軸の傾きは「2.」「3.」の入力値をそのまま使用します。ローレンツ・偏光補正済みの画像を極座標(&phi;, r)にリビニングし、方位角トレースごとにベイズ重み付きスプラインで背景を推定して差し引きます。数秒〜十数秒かかります。</p>
     <form id="background-form">
       <div class="field-grid">
         <div class="field">
@@ -350,7 +350,7 @@
 
       <div class="profile-viewer">
         <h3 data-i18n-html="background.profile_heading">動径方向 1D プロファイル</h3>
-        <p class="hint" data-i18n-html="background.profile_hint">スライダーで方位角&phi;を選ぶか、上の画像をクリックすると、その断面(青線)における動径方向(r)の強度プロファイルを表示します(ノートブックのセル18相当)。</p>
+        <p class="hint" data-i18n-html="background.profile_hint">スライダーで方位角&phi;を選ぶか、上の画像をクリックすると、その断面(青線)における動径方向(r)の強度プロファイルを表示します。</p>
         <div class="profile-controls">
           <label for="profile-phi-slider">&phi; = <span id="profile-phi-value">0</span>&deg; (bin <span id="profile-phi-bin">0</span> / <span id="profile-phi-max">359</span>)</label>
           <input type="range" id="profile-phi-slider" min="0" max="359" value="0" step="1">
@@ -368,7 +368,7 @@
 
   <section class="panel" id="peakwidth-panel" hidden>
     <h2 data-i18n-html="peakwidth.heading">7. ピーク幅の算出</h2>
-    <p class="hint" data-i18n-html="peakwidth.hint">「4. ユニットセル精密化」で選択・精密化した反射点それぞれについて、精密化で得たピーク位置(r0, &phi;0)を<strong>固定</strong>したまま、背景差し引き済みの極座標データに対して幅だけをフィットします(ノートブックのセル27・28の移植)。動径方向のローレンツ幅&gamma;<sub>r</sub>は全ての点を使ってwm/weq/cモデルをフィットし(セル29〜33)、方位角方向のガウス幅は l=0(赤道)の点のみを使って配向幅Bを求めます(セル27)。「3. 回折点の表示」で選択する反射点には l=0 のものを少なくとも1点含めてください。「6. バックグラウンド除去」の結果を使うため、先に「6.」を実行してください。</p>
+    <p class="hint" data-i18n-html="peakwidth.hint">「4. ユニットセル精密化」で選択・精密化した反射点それぞれについて、精密化で得たピーク位置(r0, &phi;0)を<strong>固定</strong>したまま、背景差し引き済みの極座標データに対して幅だけをフィットします。動径方向のローレンツ幅&gamma;<sub>r</sub>は全ての点を使ってwm/weq/cモデルをフィットし、方位角方向のガウス幅は l=0(赤道)の点のみを使って配向幅Bを求めます。「3. 回折点の表示」で選択する反射点には l=0 のものを少なくとも1点含めてください。「6. バックグラウンド除去」の結果を使うため、先に「6.」を実行してください。</p>
     <div class="field-grid">
       <div class="field">
         <label for="beam_size_nm" data-i18n-html="peakwidth.beam_size_label">ビームサイズ [nm]</label>
@@ -408,7 +408,7 @@
 
   <section class="panel" id="blockfit-panel" hidden>
     <h2 data-i18n-html="blockfit.heading">8. ブロックフィット (強度抽出)</h2>
-    <p class="hint" data-i18n-html="blockfit.hint">「7. ピーク幅の算出」で得た wm/weq/c モデルと配向幅B(いずれもフィット済みの値をそのまま使用)を使い、動径方向をブロックに分けてNNLS(非負最小二乗法)で全反射の積分強度を同時に求めます(ノートブックのセル25・35〜44の移植)。先に「6.」「7.」を実行してください。</p>
+    <p class="hint" data-i18n-html="blockfit.hint">「7. ピーク幅の算出」で得た wm/weq/c モデルと配向幅B(いずれもフィット済みの値をそのまま使用)を使い、動径方向をブロックに分けてNNLS(非負最小二乗法)で全反射の積分強度を同時に求めます。先に「6.」「7.」を実行してください。</p>
     <div class="field-grid">
       <div class="field">
         <label for="blockfit_hkl_max" data-i18n-html="blockfit.hkl_max_label">hkl 探索範囲 (&plusmn;)</label>
@@ -431,7 +431,7 @@
         <input type="number" id="blockfit_goof" step="any" value="1.0" min="0" required>
       </div>
     </div>
-    <p class="hint" data-i18n-html="blockfit.sigma_hint">&sigma;I(強度誤差)の見積もりに使うパラメータです(ノートブックのセル39・42・43相当)。相対誤差項は強反射のI/&sigma;上限をおよそ1/relative_errorに制限します。較正倍率GooFは、SHELXL等で別途得た値がある場合にそれを入力すると&sigma;I全体に掛かります(既定1.0は較正なし)。</p>
+    <p class="hint" data-i18n-html="blockfit.sigma_hint">&sigma;I(強度誤差)の見積もりに使うパラメータです。相対誤差項は強反射のI/&sigma;上限をおよそ1/relative_errorに制限します。較正倍率GooFは、SHELXL等で別途得た値がある場合にそれを入力すると&sigma;I全体に掛かります(既定1.0は較正なし)。</p>
     <button type="button" id="blockfit-btn" data-i18n-html="blockfit.submit_btn">ブロックフィットを実行</button>
     <p id="blockfit-status" class="status"></p>
 
@@ -478,7 +478,7 @@
       </div>
 
       <h3 class="subsection-title" data-i18n-html="blockfit.merged_heading">反射一覧 (同一hkl・フリーデル対を平均)</h3>
-      <p class="hint" data-i18n-html="blockfit.merged_hint">符号を正規化した同一hkl(フリーデル対を含む)を加重平均しています(ノートブックのセル48・49相当)。lごとにグループ化し(l=0が先頭)、各グループ内では面間隔dの大きい順に並べています。</p>
+      <p class="hint" data-i18n-html="blockfit.merged_hint">符号を正規化した同一hkl(フリーデル対を含む)を加重平均しています。lごとにグループ化し(l=0が先頭)、各グループ内では面間隔dの大きい順に並べています。</p>
       <div class="scrollable-table">
         <table class="refine-table" id="blockfit-merged-table"></table>
       </div>
@@ -496,7 +496,7 @@
       </div>
 
       <h3 class="subsection-title" data-i18n-html="blockfit.dspacing_heading">面間隔でさらにマージ (対称等価だがhklが異なる反射)</h3>
-      <p class="hint" data-i18n-html="blockfit.dspacing_hint">上の一覧に対し、同一l内で面間隔dが数学的にほぼ完全一致する(hklは異なる)反射同士をさらに加重平均します(ノートブックのセル51〜54相当)。許容誤差は浮動小数点誤差程度のごく小さい値が既定で、緩めすぎるとたまたま近いだけの別反射まで誤って平均してしまうので注意してください。</p>
+      <p class="hint" data-i18n-html="blockfit.dspacing_hint">上の一覧に対し、同一l内で面間隔dが数学的にほぼ完全一致する(hklは異なる)反射同士をさらに加重平均します。許容誤差は浮動小数点誤差程度のごく小さい値が既定で、緩めすぎるとたまたま近いだけの別反射まで誤って平均してしまうので注意してください。</p>
       <div class="field-grid">
         <div class="field">
           <label for="blockfit_d_tol_nm" data-i18n-html="blockfit.d_tol_label">d許容誤差 [nm]</label>

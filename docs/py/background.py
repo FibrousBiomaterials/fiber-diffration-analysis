@@ -1,6 +1,5 @@
 """極座標リビニング + ベイズ背景推定 + 平滑化を行うモジュール。
 
-instensity_resrict_polar.ipynb セル17 [3][4][5] の移植:
   rebin_to_polar      : 傾き補正 + 極座標(phi, r)へのリビニング
   sonneveld_init      : 移動最小値フィルタによる背景初期推定
   bayesian_background : 1トレースごとのベイズ重み付きスプライン背景推定
@@ -203,7 +202,7 @@ def run_background_removal(
     smooth_sigma: tuple[float, float] = (6, 10),
     on_progress: ProgressCallback | None = None,
 ) -> dict:
-    """[3]極座標リビニング→[4]ベイズ背景推定(全トレース)→[5]補間・平滑化 をまとめて実行する。"""
+    """極座標リビニング→ベイズ背景推定(全トレース)→補間・平滑化 をまとめて実行する。"""
     polar_mean, polar_std, polar_count = rebin_to_polar(
         img_corr, raw_img, cx, cy, angle_deg, blind_mask, n_phi, n_r
     )

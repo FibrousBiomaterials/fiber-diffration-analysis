@@ -1,14 +1,14 @@
 """極座標(背景差し引き済み)画像から反射強度を抽出するブロックフィット(NNLS)モジュール。
 
-instensity_resrict_polar.ipynb の以下のセルを移植したもの:
-  セル25: 反射位置の4回対称展開(±p1, phi, 180-phi, phi+180, 360-phi)と重複除去
-          (配向幅Bの算出(セル27相当)は peakwidth.py に移動)
-  セル35: ピーク形状関数(動径ローレンツ×方位角ガウス)とw_function
-  セル36: 全対称等価反射のリスト作成(R0, phi0, gamma_R, sigma_phi)
-  セル37: 設計行列の構築(ピーク列 + 平板背景列)
-  セル38: ブロックごとのNNLSフィット
-  セル39: 経験的な強度誤差の見積もり
-  セル44: 計算パターンの再構成
+以下の処理を行う:
+  反射位置の4回対称展開(±p1, phi, 180-phi, phi+180, 360-phi)と重複除去
+          (配向幅Bの算出は peakwidth.py で行う)
+  ピーク形状関数(動径ローレンツ×方位角ガウス)とw_function
+  全対称等価反射のリスト作成(R0, phi0, gamma_R, sigma_phi)
+  設計行列の構築(ピーク列 + 平板背景列)
+  ブロックごとのNNLSフィット
+  経験的な強度誤差の見積もり
+  計算パターンの再構成
 """
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ ProgressCallback = Callable[[int, int], None]
 
 
 # =============================================================================
-# セル35: ピーク形状関数
+# ピーク形状関数
 # =============================================================================
 
 def wrap_pixel(dphi: np.ndarray, n_phi: int) -> np.ndarray:
@@ -51,7 +51,7 @@ def peak_profile(R, phi, R0, phi0, gamma_R, sigma_chi, n_phi):
 
 
 def radial_width_component(sigma: float, dstar: float, wm: float, weq: float, c_para: float, lamda: float) -> float:
-    """動径方向ローレンツ半幅への寄与(w0を含まない)。ノートブック cell35 の w_function。"""
+    """動径方向ローレンツ半幅への寄与(w0を含まない)。w_function。"""
     theta = math.asin(min(max(lamda * dstar / 2.0, -1.0), 1.0))
     denom = (math.cos(2.0 * theta) ** 2) * math.cos(theta)
     wc = wm + weq * math.sin(sigma) + c_para * dstar ** 2
@@ -59,7 +59,7 @@ def radial_width_component(sigma: float, dstar: float, wm: float, weq: float, c_
 
 
 # =============================================================================
-# セル25: 反射位置の4回対称展開 + 重複除去
+# 反射位置の4回対称展開 + 重複除去
 # =============================================================================
 
 def expand_symmetric_points(projection: list[tuple[float, float, tuple[int, int, int]]]):
@@ -90,7 +90,7 @@ def expand_symmetric_points(projection: list[tuple[float, float, tuple[int, int,
 
 
 # =============================================================================
-# セル36: 全対称等価反射のリスト作成
+# 全対称等価反射のリスト作成
 # =============================================================================
 
 def build_reflections_list(
@@ -161,7 +161,7 @@ def build_reflections_list(
 
 
 # =============================================================================
-# セル37: 設計行列の構築
+# 設計行列の構築
 # =============================================================================
 
 def get_support_mask(R_flat, phi_flat, R0, phi0, gamma_R, sigma_phi, n_phi, n_lorentz=20, n_gauss=10):
@@ -221,7 +221,7 @@ def build_design_matrix(R_grid, phi_grid, reflections, n_phi, n_lorentz=15, n_ga
 
 
 # =============================================================================
-# セル38: ブロックごとのNNLSフィット
+# ブロックごとのNNLSフィット
 # =============================================================================
 
 def block_fit(
@@ -356,7 +356,7 @@ def block_fit(
 
 
 # =============================================================================
-# セル39: 経験的な強度誤差の見積もり
+# 経験的な強度誤差の見積もり
 # =============================================================================
 
 def estimate_errors(
@@ -498,7 +498,7 @@ def estimate_errors(
 
 
 # =============================================================================
-# セル44: 計算パターンの再構成
+# 計算パターンの再構成
 # =============================================================================
 
 def reconstruct_pattern(R_axis, phi_axis, reflections, intensities, n_phi, bg_flat=0.0):

@@ -1,7 +1,6 @@
 """単位格子パラメータから回折点(反射)の検出器上の位置を計算するモジュール。
 
-instensity_resrict_polar.ipynb のセル10〜13（単位格子ベクトル→逆格子ベクトル
-→hklの投影）をそのまま移植したもの。
+単位格子ベクトル→逆格子ベクトル→hklの投影、という順で計算する。
 """
 from __future__ import annotations
 
@@ -65,7 +64,7 @@ def project_reflections(
     lamda: float,
     theta_max: float = math.pi / 7,
 ) -> list[tuple[float, float, tuple[int, int, int]]]:
-    """(p1, p3, (h,k,l)) のリストを返す。ノートブック cell 13 と同じロジック。"""
+    """(p1, p3, (h,k,l)) のリストを返す。"""
     projection: list[tuple[float, float, tuple[int, int, int]]] = []
 
     for h, k, l in itertools.product(range(-hkl_max, hkl_max), repeat=3):
