@@ -6,7 +6,7 @@ const PYODIDE_INDEX_URL = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/
 
 // py/*.py を編集するたびにここを上げ、ブラウザキャッシュされた古いコードが
 // Workerに読み込まれ続けるのを防ぐ(pyWorker.js自体のキャッシュ問題と同じ対策)。
-const PY_SOURCE_VERSION = 6;
+const PY_SOURCE_VERSION = 7;
 
 const PY_MODULE_FILES = [
   "detector.py",

@@ -12,6 +12,7 @@
 """
 from __future__ import annotations
 
+import gc
 import math
 from typing import Callable
 
@@ -289,68 +290,75 @@ def block_fit(
         block_i = block_count - 1
         assigned_refs = set(assignment[block_i])
 
-        sR = max(0, cR - block_R // 2)
-        eR = min(n_R, cR + block_R // 2)
-
-        R_block = R_axis[sR:eR]
-        phi_block = phi_axis
-
-        R_g, phi_g = np.meshgrid(R_block, phi_block, indexing="ij")
-        y = I_obs[sR:eR, :].ravel().astype(np.float64)
-
-        X, active_idx, _column_names = build_design_matrix(R_g, phi_g, reflections, n_phi, add_flat_bg=True)
-        del R_g, phi_g
-
-        if on_progress:
-            on_progress(block_count, n_blocks_total)
-
-        if len(active_idx) == 0:
-            del X
-            continue
-
-        X_fit = np.asarray(X, dtype=np.float64)
-        y_fit = np.asarray(y, dtype=np.float64)
-        del y
-
-        valid = np.isfinite(y_fit) & np.all(np.isfinite(X_fit), axis=1)
-        X_fit = X_fit[valid]
-        y_fit = y_fit[valid]
-        del valid
-
-        if X_fit.shape[0] == 0 or X_fit.shape[1] == 0:
-            del X, X_fit
-            continue
-
-        col_norm = np.linalg.norm(X_fit, axis=0)
-        active_cols = col_norm > 0
-        del col_norm
-
-        if not np.any(active_cols):
-            del X, X_fit
-            continue
-
-        X_active = X_fit[:, active_cols]
-        del X_fit
-
+        # ブロックごとの密な設計行列(n_pixels x n_cols)は反射数の多いブロックで
+        # 数百MB〜規模になりうる。WASMヒープは一度確保すると縮まないため、
+        # del だけでなく try/finally で毎ブロック必ず gc.collect() を挟み、
+        # 次のブロックの確保前に断片化・肥大化を抑える。
         try:
-            A_active, _residual = nnls(X_active, y_fit, maxiter=10 * X_active.shape[1])
-        except RuntimeError:
-            del X, X_active
-            continue
+            sR = max(0, cR - block_R // 2)
+            eR = min(n_R, cR + block_R // 2)
 
-        A = np.zeros(X.shape[1], dtype=np.float64)
-        A[active_cols] = A_active
-        del X, X_active, A_active
+            R_block = R_axis[sR:eR]
+            phi_block = phi_axis
 
-        n_peak_cols = len(active_idx)
-        A_peaks = A[:n_peak_cols]
-        bg_flat = A[n_peak_cols] if len(A) > n_peak_cols else np.nan
-        bg_values[block_i] = bg_flat
+            R_g, phi_g = np.meshgrid(R_block, phi_block, indexing="ij")
+            y = I_obs[sR:eR, :].ravel().astype(np.float64)
 
-        for k, idx in enumerate(active_idx):
-            if idx in assigned_refs:
-                intensities[idx] = A_peaks[k]
-                counts[idx] = 1
+            X, active_idx, _column_names = build_design_matrix(R_g, phi_g, reflections, n_phi, add_flat_bg=True)
+            del R_g, phi_g
+
+            if on_progress:
+                on_progress(block_count, n_blocks_total)
+
+            if len(active_idx) == 0:
+                del X
+                continue
+
+            X_fit = np.asarray(X, dtype=np.float64)
+            y_fit = np.asarray(y, dtype=np.float64)
+            del y
+
+            valid = np.isfinite(y_fit) & np.all(np.isfinite(X_fit), axis=1)
+            X_fit = X_fit[valid]
+            y_fit = y_fit[valid]
+            del valid
+
+            if X_fit.shape[0] == 0 or X_fit.shape[1] == 0:
+                del X, X_fit
+                continue
+
+            col_norm = np.linalg.norm(X_fit, axis=0)
+            active_cols = col_norm > 0
+            del col_norm
+
+            if not np.any(active_cols):
+                del X, X_fit
+                continue
+
+            X_active = X_fit[:, active_cols]
+            del X_fit
+
+            try:
+                A_active, _residual = nnls(X_active, y_fit, maxiter=10 * X_active.shape[1])
+            except RuntimeError:
+                del X, X_active
+                continue
+
+            A = np.zeros(X.shape[1], dtype=np.float64)
+            A[active_cols] = A_active
+            del X, X_active, A_active
+
+            n_peak_cols = len(active_idx)
+            A_peaks = A[:n_peak_cols]
+            bg_flat = A[n_peak_cols] if len(A) > n_peak_cols else np.nan
+            bg_values[block_i] = bg_flat
+
+            for k, idx in enumerate(active_idx):
+                if idx in assigned_refs:
+                    intensities[idx] = A_peaks[k]
+                    counts[idx] = 1
+        finally:
+            gc.collect()
 
     return intensities, counts, bg_values
 
